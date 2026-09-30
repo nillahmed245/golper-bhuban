@@ -1,0 +1,121 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Catch-all deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'md3048284@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isNotSuspended() {
+      return isSignedIn() && (
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId) && 
+        request.resource.data.keys().hasAll(['uid', 'email', 'role', 'status']) &&
+        request.resource.data.status == 'active' &&
+        request.resource.data.role == (request.auth.token.email == 'md3048284@gmail.com' ? 'admin' : 'user');
+      allow update: if (isOwner(userId) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'bio']) &&
+        isNotSuspended()) || isAdmin();
+      allow delete: if isAdmin();
+
+      // Bookmarks subcollection
+      match /bookmarks/{storyId} {
+        allow read: if isOwner(userId);
+        allow create, delete: if isOwner(userId) && isNotSuspended();
+      }
+    }
+
+    // Story Rules
+    match /stories/{storyId} {
+      function isValidStory(data) {
+        return data.title is string && data.title.size() >= 3 && data.title.size() <= 200 &&
+               data.category in ['Love', 'Horror', 'Comedy', 'Mystery', 'Fantasy', 'Emotional', 'Adventure', 'Kids'] &&
+               data.content is string && data.content.size() <= 100000 &&
+               data.authorId == request.auth.uid &&
+               data.status in ['pending', 'approved', 'rejected'];
+      }
+
+      allow read: if resource.data.status == 'approved' || (isSignedIn() && resource.data.authorId == request.auth.uid) || isAdmin();
+      allow create: if isNotSuspended() && isValidStory(request.resource.data) && request.resource.data.status == 'pending';
+      allow update: if isAdmin() || (
+        isOwner(resource.data.authorId) && 
+        isNotSuspended() &&
+        isValidStory(request.resource.data) &&
+        request.resource.data.status == resource.data.status && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'coverImage', 'category', 'description', 'content', 'tags'])
+      ) || (
+        // Public interactions (views, downloads)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'downloadCount']) &&
+        request.resource.data.views >= resource.data.views &&
+        request.resource.data.downloadCount >= resource.data.downloadCount
+      ) || (
+        // Likes (requires login and not suspended)
+        isNotSuspended() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) &&
+        (request.resource.data.likes == resource.data.likes + 1 || request.resource.data.likes == resource.data.likes - 1)
+      );
+      allow delete: if isAdmin() || (isOwner(resource.data.authorId) && isNotSuspended());
+
+      // Comments subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isNotSuspended() && request.resource.data.authorId == request.auth.uid && request.resource.data.content is string && request.resource.data.content.size() <= 1000;
+        allow update, delete: if isAdmin() || (isNotSuspended() && resource.data.authorId == request.auth.uid);
+      }
+
+      // Likes subcollection
+      match /likes/{userId} {
+        allow read: if true;
+        allow create, delete: if isNotSuspended() && isOwner(userId);
+      }
+    }
+
+    // Reports Rules
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isNotSuspended() && request.resource.data.reporterId == request.auth.uid && request.resource.data.status == 'pending';
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Notifications Rules
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn(); // System/Admins can create
+      allow update: if isSignedIn() && resource.data.userId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

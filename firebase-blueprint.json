@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered user profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "email": { "type": "string", "description": "User email" },
+        "displayName": { "type": "string", "description": "User's full name" },
+        "photoURL": { "type": "string", "description": "Profile picture URL" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User access level" },
+        "status": { "type": "string", "enum": ["active", "suspended"], "description": "User account status" },
+        "bio": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "status"]
+    },
+    "Story": {
+      "title": "Story",
+      "description": "A story published by a user",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "coverImage": { "type": "string" },
+        "category": { "type": "string", "enum": ["Love", "Horror", "Comedy", "Mystery", "Fantasy", "Emotional", "Adventure", "Kids"] },
+        "description": { "type": "string", "maxLength": 500 },
+        "content": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" }, "maxItems": 10 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "views": { "type": "number" },
+        "likes": { "type": "number" },
+        "downloadCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] }
+      },
+      "required": ["title", "category", "content", "authorId", "status"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "User comment on a story",
+      "type": "object",
+      "properties": {
+        "storyId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "content": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storyId", "authorId", "content"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "User like on a story",
+      "type": "object",
+      "properties": {
+        "storyId": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["storyId", "userId"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "User report for inappropriate content",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["story", "comment"] },
+        "targetId": { "type": "string" },
+        "parentId": { "type": "string", "description": "Story ID if reporting a comment" },
+        "reason": { "type": "string", "maxLength": 500 },
+        "reporterId": { "type": "string" },
+        "reporterName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "targetId", "reason", "reporterId", "status"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["like", "comment", "approval", "rejection", "moderation", "admin_alert"] },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "link": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "message", "isRead", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/stories/{storyId}": {
+      "schema": "Story",
+      "description": "Public and pending stories"
+    },
+    "/stories/{storyId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Comments on a specific story"
+    },
+    "/stories/{storyId}/likes/{userId}": {
+      "schema": "Like",
+      "description": "Likes on a specific story"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Content reports for moderation"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    }
+  }
+}
