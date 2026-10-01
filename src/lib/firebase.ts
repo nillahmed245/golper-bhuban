@@ -8,14 +8,16 @@ export const auth = getAuth(app);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const googleProvider = new GoogleAuthProvider();
 
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
+export const OperationType = {
+  CREATE: 'create',
+  UPDATE: 'update',
+  DELETE: 'delete',
+  LIST: 'list',
+  GET: 'get',
+  WRITE: 'write',
+} as const;
+
+export type OperationType = typeof OperationType[keyof typeof OperationType];
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const errInfo = {

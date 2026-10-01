@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Heart, Eye, Download, User, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDate, truncateText } from '../lib/utils';
+import storyPlaceholder from '../assets/images/story_cover_placeholder_1790797553347.jpg';
 
 interface StoryCardProps {
   story: {
@@ -27,7 +28,7 @@ export default function StoryCard({ story }: StoryCardProps) {
     >
       <Link to={`/story/${story.id}`} className="block relative aspect-[3/4] overflow-hidden bg-slate-100">
         <img 
-          src={story.coverImage || '/src/assets/images/story_cover_placeholder_1790797553347.jpg'} 
+          src={story.coverImage || storyPlaceholder} 
           alt={story.title}
           loading="lazy"
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"

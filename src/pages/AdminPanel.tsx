@@ -12,6 +12,7 @@ import { formatDate } from '../lib/utils';
 import { sendNotification } from '../lib/notificationService';
 import { motion } from 'framer-motion';
 import SEO from '../components/SEO';
+import storyPlaceholder from '../assets/images/story_cover_placeholder_1790797553347.jpg';
 
 type AdminTab = 'dashboard' | 'stories' | 'users' | 'reports' | 'settings';
 
@@ -265,7 +266,7 @@ export default function AdminPanel() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="h-14 w-10 bg-slate-100 rounded-lg overflow-hidden shrink-0">
-                              <img src={story.coverImage || '/src/assets/images/story_cover_placeholder_1790797553347.jpg'} className="w-full h-full object-cover" />
+                              <img src={story.coverImage || storyPlaceholder} className="w-full h-full object-cover" />
                             </div>
                             <div>
                               <p className="font-bold text-slate-900 dark:text-white mb-1 line-clamp-1">{story.title}</p>

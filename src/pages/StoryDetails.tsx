@@ -12,6 +12,7 @@ import SEO from '../components/SEO';
 import AdPlacement from '../components/AdPlacement';
 import StoryCard from '../components/StoryCard';
 import { Edit2 } from 'lucide-react';
+import storyPlaceholder from '../assets/images/story_cover_placeholder_1790797553347.jpg';
 
 export default function StoryDetails() {
   const { id } = useParams();
@@ -257,7 +258,7 @@ export default function StoryDetails() {
       {/* Cover Header */}
       <div className="relative h-[400px] overflow-hidden">
         <img 
-          src={story.coverImage || '/src/assets/images/story_cover_placeholder_1790797553347.jpg'} 
+          src={story.coverImage || storyPlaceholder} 
           className="w-full h-full object-cover blur-sm opacity-50 scale-110"
           loading="eager"
         />
@@ -270,7 +271,7 @@ export default function StoryDetails() {
               className="w-48 aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-slate-800"
             >
               <img 
-                src={story.coverImage || '/src/assets/images/story_cover_placeholder_1790797553347.jpg'} 
+                src={story.coverImage || storyPlaceholder} 
                 className="w-full h-full object-cover" 
                 loading="eager"
               />
